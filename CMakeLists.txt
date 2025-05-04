@@ -7,6 +7,8 @@ project(
 
 set(CXX_COMPILER_VERSION 17)
 
+enable_testing()
+
 add_subdirectory(lib/tape)
 
 add_executable(main src/main.cpp)
