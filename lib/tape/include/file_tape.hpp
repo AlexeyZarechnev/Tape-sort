@@ -22,12 +22,12 @@ private:
     void write(int value);
 
     // Movement
-    void move_forward();
-    void move_back();
+    void move_forward() noexcept;
+    void move_back() noexcept;
     void rewind(int delta);
-    void move(int delta);
-    int current_pos();
-    int size();
+    void move(int delta) noexcept;
+    int current_pos() noexcept;
+    int size() noexcept;
     
 
     ~FileTape() noexcept;

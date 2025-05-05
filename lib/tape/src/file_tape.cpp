@@ -42,7 +42,7 @@ FileTape::FileTape(const char *path, const char *config_path)
     _read_delay = values[0];
     _write_delay = values[1];
     _move_delay = values[2];
-    _move_delay = values[3];
+    _rewind_delay = values[3];
 }
 
 FileTape::FileTape(FileTape &&other)
@@ -67,6 +67,9 @@ FileTape &FileTape::operator=(FileTape &&other)
 
 int FileTape::read()
 {
+    if (current_pos() == size())
+        throw std::out_of_range("cannot from unwritten cell");
+    
     std::this_thread::sleep_for(std::chrono::milliseconds(_read_delay));
     _storage.read(reinterpret_cast<char*>(&buffer), 4);
     move(-1);
@@ -82,11 +85,11 @@ void FileTape::write(int value)
     move(-1);
 }
 
-void FileTape::move_forward()
+void FileTape::move_forward() noexcept
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(_move_delay));
 
-    if (current_pos() == _size) {
+    if (current_pos() == size()) {
         buffer = 0;
         _storage.write(reinterpret_cast<char*>(&buffer), 4);
         ++_size;
@@ -95,24 +98,33 @@ void FileTape::move_forward()
     }
 }
 
-void FileTape::move_back()
+void FileTape::move_back() noexcept
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(_move_delay));
+
+    if (current_pos() == 0)
+        return;
+    
     move(-1);
 }
 
 void FileTape::rewind(int delta)
 {
+    if (delta > 0 && current_pos() + delta >= size())
+        throw std::invalid_argument("cannot rewind more than tape size");
+    if (delta < 0 && current_pos() + delta < 0)
+        throw std::invalid_argument("cannot rewind more than beginning of tape");
+    
     std::this_thread::sleep_for(std::chrono::milliseconds(_rewind_delay));
     move(delta);
 }
 
-int FileTape::current_pos()
+int FileTape::current_pos() noexcept
 {
     return _storage.tellg() / 4;
 }
 
-int FileTape::size()
+int FileTape::size() noexcept
 {
     return _size;
 }
@@ -120,7 +132,7 @@ int FileTape::size()
 FileTape::~FileTape() noexcept
 {}
 
-void FileTape::move(int delta)
+void FileTape::move(int delta) noexcept
 {
     _storage.seekg(delta * 4, std::ios::cur);
 }
