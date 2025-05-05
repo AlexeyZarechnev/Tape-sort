@@ -68,7 +68,7 @@ FileTape &FileTape::operator=(FileTape &&other)
 int FileTape::read()
 {
     if (current_pos() == size())
-        throw std::out_of_range("cannot from unwritten cell");
+        throw std::out_of_range("cannot read from unwritten cell");
     
     std::this_thread::sleep_for(std::chrono::milliseconds(_read_delay));
     _storage.read(reinterpret_cast<char*>(&buffer), 4);
@@ -90,9 +90,7 @@ void FileTape::move_forward() noexcept
     std::this_thread::sleep_for(std::chrono::milliseconds(_move_delay));
 
     if (current_pos() == size()) {
-        buffer = 0;
-        _storage.write(reinterpret_cast<char*>(&buffer), 4);
-        ++_size;
+        return;
     } else {
        move(1);
     }
